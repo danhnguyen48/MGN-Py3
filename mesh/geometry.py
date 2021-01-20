@@ -6,7 +6,7 @@ import scipy.sparse as sp
 def sparse_to_tensor(x):
     coo = x.tocoo()
     indices = np.mat([coo.row, coo.col]).transpose()
-    return tf.sparse_reorder(tf.SparseTensor(indices, coo.data, coo.shape))
+    return tf.sparse.reorder(tf.SparseTensor(indices, coo.data, coo.shape))
 
 
 def sparse_dense_matmul_batch(a, b):

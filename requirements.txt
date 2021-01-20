@@ -1,5 +1,0 @@
-tensorflow-gpu>=1.13.2
-matplotlib
-chumpy
-dirt
-psbody-mesh

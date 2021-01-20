@@ -15,7 +15,6 @@ import tensorflow as tf
 def batch_skew(vec, batch_size=None, name=None):
     """
     vec is N x 3, batch_size is int
-
     returns N x 3 x 3. Skew_sym version of each matrix.
     """
     with tf.name_scope(name, "batch_skew", [vec]):
@@ -69,12 +68,9 @@ def batch_lrotmin(theta, name=None):
     """ NOTE: not used bc I want to reuse R and this is simple.
     Output of this is used to compute joint-to-pose blend shape mapping.
     Equation 9 in SMPL paper.
-
-
     Args:
       pose: `Tensor`, N x 72 vector holding the axis-angle rep of K joints.
             This includes the global rotation so K=24
-
     Returns
       diff_vec : `Tensor`: N x 207 rotation matrix of 23=(K-1) joints with identity subtracted.,
     """
@@ -92,15 +88,12 @@ def batch_lrotmin(theta, name=None):
 def batch_global_rigid_transformation(Rs, Js, parent, rotate_base=False, name=None):
     """
     Computes absolute joint locations given pose.
-
     rotate_base: if True, rotates the global rotation by 90 deg in x axis.
     if False, this is the original SMPL coordinate.
-
     Args:
       Rs: N x 24 x 3 x 3 rotation vector of K joints
       Js: N x 24 x 3, joint locations before posing
       parent: 24 holding the parent id for each index
-
     Returns
       new_J : `Tensor`: N x 24 x 3 location of absolute joints
       A     : `Tensor`: N x 24 4 x 4 relative joint transformations for LBS.

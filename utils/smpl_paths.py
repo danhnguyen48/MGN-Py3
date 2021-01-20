@@ -40,7 +40,7 @@ class SmplPaths:
 
     def get_hres_smpl_model_data(self):
 
-        dd = pkl.load(open(self.get_smpl_file()))
+        dd = pkl.load(open(self.get_smpl_file(), "rb"), encoding="latin1")
         backwards_compatibility_replacements(dd)
 
         hv, hf, mapping = get_hres(dd['v_template'], dd['f'])
@@ -76,7 +76,7 @@ class SmplPaths:
 
     @staticmethod
     def get_vt_ft():
-        vt, ft = pkl.load(open(smpl_vt_ft_path))
+        vt, ft = pkl.load(open(smpl_vt_ft_path, "rb"), encoding="latin1")
         return vt, ft
 
     @staticmethod

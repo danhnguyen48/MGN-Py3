@@ -1,9 +1,7 @@
 '''
 This code runs pre-trained MGN.
-
 If you use this code please cite:
 "Multi-Garment Net: Learning to Dress 3D People from Images", ICCV 2019
-
 Code author: Bharat
 '''
 
@@ -175,27 +173,28 @@ if __name__ == "__main__":
     from os.path import exists, join, split
     from psbody.mesh import Mesh, MeshViewer, MeshViewers
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0, 1, 2, 3'
-    conf = tf.ConfigProto()
+    #os.environ['CUDA_VISIBLE_DEVICES'] = '0, 1, 2, 3'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    conf = tf.compat.v1.ConfigProto()
     conf.gpu_options.allow_growth = True
-    tf.enable_eager_execution(config=conf)
+    tf.compat.v1.enable_eager_execution(config=conf)
 
     with open('assets/hresMapping.pkl', 'rb') as f:
-        _, faces = pkl.load(f)
+        _, faces = pkl.load(f,encoding="latin1")
 
     TEMPLATE = pkl.load(
-        open('assets/allTemplate_withBoundaries_symm.pkl', 'rb'))
+        open('assets/allTemplate_withBoundaries_symm.pkl', 'rb'), encoding="latin1")
     pca_verts = {}
     for garment in config.garmentKeys:
         with open(os.path.join('assets/garment_basis_35_temp20', garment + '_param_{}_corrected.pkl'.format(config.PCA_)), 'rb') as f:
-            pca_verts[garment] = pkl.load(f)
+            pca_verts[garment] = pkl.load(f, encoding="latin1")
 
     model_dir = 'saved_model/'
     # Load model
     m = load_model(model_dir)
 
     # Load test data
-    dat = pkl.load(open('assets/test_data.pkl'))
+    dat = pkl.load(open('assets/test_data.pkl',"rb"), encoding="latin1")
 
     # Get results before optimization
     pred = get_results(m, dat)

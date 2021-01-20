@@ -39,7 +39,7 @@ class GarmentNet(tf.keras.Model):
                 'assets/garment_basis_{}_temp20/{}_param_{}_corrected.pkl'.format(
                     no_comp, garment_key, no_comp),
                 'rb') as f:
-            pca = pkl.load(f)
+            pca = pkl.load(f, encoding="latin1")
 
         # Define layers
         self.d1 = Dense(512, activation='relu')
@@ -219,11 +219,11 @@ class BaseModel(tf.keras.Model):
         self.model = None
         self.garmentModels = []
         if self.config:
-            self.optimizer = tf.train.AdamOptimizer(
+            self.optimizer = tf.compat.v1.train.AdamOptimizer(
                 learning_rate=self.config.train.lr)
         else:
             self.optimizer = tf.train.AdamOptimizer(0.001)
-        self.vertSpread = pkl.load(open('assets/vert_spread.pkl'))
+        self.vertSpread = pkl.load(open('assets/vert_spread.pkl', "rb"), encoding="latin1")
         self.garmentModels = []
 
     def save(self, checkpoint_path):
@@ -259,7 +259,7 @@ class PoseShapeOffsetModel(BaseModel):
              np.array([145, 0, 65]),
              np.array([0, 145, 65])], tf.float32) / 255.
         with open('assets/hresMapping.pkl', 'rb') as f:
-            _, self.faces = pkl.load(f)
+            _, self.faces = pkl.load(f, encoding="latin1")
         self.faces = np.int32(self.faces)
 
         # Define network layers

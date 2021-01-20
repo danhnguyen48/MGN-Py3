@@ -47,8 +47,8 @@ class SMPL(tf.keras.Model):  # (object):
         self.scale = scale
         self.data_type = dtype
 
-        with open(pkl_path, 'r') as f:
-            dd = pickle.load(f)
+        with open(pkl_path, 'rb') as f:
+            dd = pkl.load(f, encoding="latin1")
         # Mean template vertices
         self.v_template = tf.Variable(
             undo_chumpy(dd['v_template']),
@@ -56,7 +56,7 @@ class SMPL(tf.keras.Model):  # (object):
             dtype=dtype,
             trainable=False)
         # Size of mesh [Number of vertices, 3]
-        self.size = [self.v_template.shape[0].value, 3]
+        self.size = [self.v_template.shape[0], 3]
         self.num_betas = dd['shapedirs'].shape[-1]
         # Shape blend shape basis: 6980 x 3 x 10
         # reshaped to 6980*30 x 10, transposed to 10x6980*3
@@ -95,7 +95,7 @@ class SMPL(tf.keras.Model):  # (object):
         self.theta_is_perfect_rotmtx = theta_is_perfect_rotmtx
 
         with open(os.path.join(os.path.dirname(__file__), '../assets/hresMapping.pkl'), 'rb') as f:
-            mapping, nf = pickle.load(f)
+            mapping, nf = pkl.load(f, encoding="latin1")
 
         self.weights_hres = tf.cast(tf.Variable(np.hstack([
             np.expand_dims(
@@ -120,7 +120,6 @@ class SMPL(tf.keras.Model):  # (object):
         Args:
           beta: N x 10
           theta: N x 72 (with 3-D axis-angle rep)
-
         Updates:
         self.J_transformed: N x 24 x 3 joint location after shaping
                  & posing with beta and theta

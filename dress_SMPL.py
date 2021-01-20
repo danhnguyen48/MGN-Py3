@@ -1,10 +1,8 @@
 '''
 Code to dress SMPL with registered garments.
 Set the "path" variable in this code to the downloaded Multi-Garment Dataset
-
 If you use this code please cite:
 "Multi-Garment Net: Learning to Dress 3D People from Images", ICCV 2019
-
 Code author: Bharat
 Shout out to Chaitanya for intersection removal code
 '''
@@ -20,7 +18,7 @@ from glob import glob
 
 
 def load_smpl_from_file(file):
-    dat = pkl.load(open(file))
+    dat = pkl.load(open(file, "rb"), encoding="latin1")
     dp = SmplPaths(gender=dat['gender'])
     smpl_h = Smpl(dp.get_hres_smpl_model_data())
 
@@ -94,7 +92,7 @@ def dress(smpl_tgt, body_src, garment, vert_inds, garment_tex=None):
     return ret_posed_interp
 
 
-path = '/BS/bharat/work/MGN_release/Multi-Garment_dataset/'
+path = 'Multi-Garment_dataset/'
 all_scans = glob(path + '*')
 garment_classes = ['Pants', 'ShortPants',
                    'ShirtNoCoat', 'TShirtNoCoat', 'LongCoat']
@@ -106,20 +104,38 @@ if __name__ == '__main__':
     dp = SmplPaths()
     vt, ft = dp.get_vt_ft_hres()
     smpl = Smpl(dp.get_hres_smpl_model_data())
+    tgt_body = Mesh(smpl.r, smpl.f)
+    # tgt_body.show()
 
     # This file contains correspondances between garment vertices and smpl body
-    # fts_file = 'assets/garment_fts.pkl'
-    fts_file = 'assets-win/garment_fts_unix.pkl'
-    vert_indices, fts = pkl.load(open(fts_file))
+    fts_file = 'assets/garment_fts.pkl'
+
+    vert_indices, fts = pkl.load(open(fts_file, "rb"), encoding="latin1")
     fts['naked'] = ft
 
     # Choose any garment type as source
-    # garment_type = 'TShirtNoCoat'
-    garment_type = 'Pants'
-    # index = np.random.randint(0, len(gar_dict[garment_type]))   ## Randomly pick from the digital wardrobe
-    # path = split(gar_dict[garment_type][index])[0]
-    path = '/mnt/Galaxy/Datasets/Multi-Garment_dataset/125611508622317'
+    garment_type = 'TShirtNoCoat'
+    garment_type_1 = 'Pants'
 
+    # Randomly pick from the digital wardrobe
+    index = np.random.randint(0, len(gar_dict[garment_type]))
+    path = split(gar_dict[garment_type][index])[0]
+
+    index_1 = np.random.randint(0, len(gar_dict[garment_type_1]))
+    path_1 = split(gar_dict[garment_type_1][index_1])[0]
+
+    print("index: ", index)
+    print("path: ", path)
+
+    print("index: ", index_1)
+    print("path: ", path_1)
+
+    # path = 'Multi-Garment_dataset/125611508622317'
+    # path_1 = path
+    # path = 'Multi-Garment_dataset/125611508622317'
+    # path = 'Multi-Garment_dataset/125611505422995'
+
+    # first garment
     garment_org_body_unposed = load_smpl_from_file(
         join(path, 'registration.pkl'))
     garment_org_body_unposed.pose[:] = 0
@@ -127,24 +143,45 @@ if __name__ == '__main__':
     garment_org_body_unposed = Mesh(
         garment_org_body_unposed.v, garment_org_body_unposed.f)
 
+    # second garment
+    garment_org_body_unposed_1 = load_smpl_from_file(
+        join(path_1, 'registration.pkl'))
+    garment_org_body_unposed_1.pose[:] = 0
+    garment_org_body_unposed_1.trans[:] = 0
+    garment_org_body_unposed_1 = Mesh(
+        garment_org_body_unposed_1.v, garment_org_body_unposed_1.f)
+
+    # garment type
     garment_unposed = Mesh(filename=join(path, garment_type + '.obj'))
+    garment_unposed_1 = Mesh(filename=join(path_1, garment_type_1 + '.obj'))
+
+    vert_inds = vert_indices[garment_type]
     garment_tex = join(path, 'multi_tex.jpg')
+    garment_unposed.set_texture_image(garment_tex)
+
+    vert_inds_1 = vert_indices[garment_type_1]
+    garment_tex_1 = join(path_1, 'multi_tex.jpg')
+    garment_unposed_1.set_texture_image(garment_tex_1)
 
     # Generate random SMPL body (Feel free to set up ur own smpl) as target subject
-    smpl.pose[:] = np.random.randn(72) * 0.05
-    smpl.betas[:] = np.random.randn(10) * 0.01
+    smpl.pose[:] = 0
+    smpl.betas[:] = np.random.randn(10) * 0.02
     smpl.trans[:] = 0
     tgt_body = Mesh(smpl.r, smpl.f)
 
-    vert_inds = vert_indices[garment_type]
-    garment_unposed.set_texture_image(garment_tex)
+    # tgt_body.show()
 
     new_garment = dress(smpl, garment_org_body_unposed,
                         garment_unposed, vert_inds, garment_tex)
 
-    mvs = MeshViewers((1, 2))
-    mvs[0][0].set_static_meshes([garment_unposed])
-    mvs[0][1].set_static_meshes([new_garment, tgt_body])
-    raw_input("Done?")
+    new_garment_1 = dress(smpl, garment_org_body_unposed_1,
+                          garment_unposed_1, vert_inds_1, garment_tex_1)
+
+    mvs = MeshViewers((1, 4))
+    mvs[0][0].set_static_meshes([tgt_body])
+    mvs[0][1].set_static_meshes([garment_unposed])
+    mvs[0][2].set_static_meshes([garment_unposed_1])
+    mvs[0][3].set_static_meshes([new_garment, new_garment_1, tgt_body])
+    # input("Done?")
 
     print('Done')

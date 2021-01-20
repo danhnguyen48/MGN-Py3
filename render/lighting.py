@@ -37,16 +37,13 @@ def _get_face_normals(vertices, faces):
 
 def vertex_normals(vertices, faces, name=None):
     """Computes vertex normals for the given meshes.
-
     This function takes a batch of meshes with common topology, and calculates vertex normals for each.
-
     Args:
         vertices: a `Tensor` of shape [*, vertex count, 3] or [*, vertex count, 4], where * represents arbitrarily
             many leading (batch) dimensions.
         faces: an int32 `Tensor` of shape [face count, 3]; each value is an index into the first dimension of `vertices`, and
             each row defines one triangle.
         name: an optional name for the operation
-
     Returns:
         a `Tensor` of shape [*, vertex count, 3], which for each vertex, gives the (normalised) average of the normals of
         all faces that include that vertex
@@ -115,7 +112,6 @@ def _static_map_fn(f, elements):
 
 def vertex_normals_pre_split(vertices, faces, name=None, static=False):
     """Computes vertex normals for the given pre-split meshes.
-
     This function is identical to `vertex_normals`, except that it assumes each vertex is used by just one face, which
     allows a more efficient implementation.
     """
@@ -155,17 +151,14 @@ def vertex_normals_pre_split(vertices, faces, name=None, static=False):
 
 def split_vertices_by_face(vertices, faces, name=None):
     """Returns a new mesh where each vertex is used by exactly one face.
-
     This function takes a batch of meshes with common topology as input, and also returns a batch of meshes
     with common topology. The resulting meshes have the same geometry, but each vertex is used by exactly
     one face.
-
     Args:
         vertices: a `Tensor` of shape [*, vertex count, 3] or [*, vertex count, 4], where * represents arbitrarily
             many leading (batch) dimensions.
         faces: an int32 `Tensor` of shape [face count, 3]; each value is an index into the first dimension of `vertices`, and
             each row defines one triangle.
-
     Returns:
         a tuple of two tensors `new_vertices, new_faces`, where `new_vertices` has shape [*, V, 3] or [*,  V, 4], where
         V is the new vertex count after splitting, and `new_faces` has shape [F, 3] where F is the new face count after
@@ -207,14 +200,11 @@ def split_vertices_by_face(vertices, faces, name=None):
 
 def diffuse_directional(vertex_normals, vertex_colors, light_direction, light_color, double_sided=True, name=None):
     """Calculate reflectance due to directional lighting on a diffuse surface.
-
     This calculates Lambertian reflectance at points with the given normals, under a single directional
     (parallel) light of the specified angle, mapping over leading batch/etc. dimensions. If double_sided is set,
     then surfaces whose normal faces away from the light are still lit; otherwise, they will be black.
-
     Note that this function may be applied to vertices of a mesh before rasterisation, or to values in a G-buffer for
     deferred shading.
-
     Args:
         vertex_normals: a `Tensor` of shape [*, vertex count, 3], where * represents arbitrarily many leading (batch) dimensions..
         vertex_colors: a `Tensor` of shape [*, vertex count, C], where * is the same as for `vertex_normals` and C is the
@@ -223,7 +213,6 @@ def diffuse_directional(vertex_normals, vertex_colors, light_direction, light_co
         light_color: a `Tensor` of shape [*, C] defining the colour of the light.
         double_sided: a python `bool`; if true, back faces will be shaded the same as front faces; else, they will be black
         name: an optional name for the operation.
-
     Returns:
         a `Tensor` of shape [*, vertex count, C], where * is the same as for the input parameters and C is the number of channels,
         giving the reflectance for each point.
@@ -257,14 +246,11 @@ def diffuse_directional(vertex_normals, vertex_colors, light_direction, light_co
 
 def specular_directional(vertex_positions, vertex_normals, vertex_reflectivities, light_direction, light_color, camera_position, shininess, double_sided=True, name=None):
     """Calculate reflectance due to directional lighting on a specular surface.
-
     This calculates Phong reflectance at points with the given normals, under a single directional
     (parallel) light of the specified angle, mapping over batch/etc. dimensions. If double_sided is set,
     then surfaces whose normal faces away from the light are still lit; otherwise, they will be black.
-
     Note that this function may be applied to vertices of a mesh before rasterisation, or to values in a G-buffer for
     deferred shading.
-
     Args:
         vertex_positions: a `Tensor` of shape [*, vertex count, 3], where * represents arbitrarily many leading (batch) dimensions.,
             defining the 3D location of each point.
@@ -278,7 +264,6 @@ def specular_directional(vertex_positions, vertex_normals, vertex_reflectivities
         shininess: a `Tensor` of shape [*] defining the specular reflectance index.
         double_sided: a python `bool`; if true, back faces will be shaded the same as front faces; else, they will be black.
         name: an optional name for the operation.
-
     Returns:
         a `Tensor` of shape [*, vertex count, C], where * is the same as for the input parameters and C is the number of channels,
         giving the reflectance for each point.
@@ -330,16 +315,12 @@ def specular_directional(vertex_positions, vertex_normals, vertex_reflectivities
 
 def diffuse_point(vertex_positions, vertex_normals, vertex_colors, light_position, light_color, double_sided=True, name=None):
     """Calculate reflectance due to directional lighting on a diffuse surface.
-
     This calculates Lambertian reflectance at points with the given normals, under a single point light at the
     specified location, mapping over leading batch/etc. dimensions. If double_sided is set, then surfaces whose
     normal faces away from the light are still lit; otherwise, they will be black.
-
     A point light radiates uniformly in all directions from some physical location.
-
     Note that this function may be applied to vertices of a mesh before rasterisation, or to values in a G-buffer for
     deferred shading.
-
     Args:
         vertex_positions: a `Tensor` of shape [*, vertex count, 3], where * represents arbitrarily many leading (batch) dimensions.,
             defining the 3D location of each point.
@@ -351,7 +332,6 @@ def diffuse_point(vertex_positions, vertex_normals, vertex_colors, light_positio
         light_color: a `Tensor` of shape [*, C] defining the colour of the light.
         double_sided: a python `bool`; if true, back faces will be shaded the same as front faces; else, they will be black
         name: an optional name for the operation.
-
     Returns:
         a `Tensor` of shape [*, vertex count, C], where * is the same as for the input parameters and C is the number of channels,
         giving the reflectance for each point.
