@@ -189,7 +189,7 @@ if __name__ == "__main__":
         with open(os.path.join('assets/garment_basis_35_temp20', garment + '_param_{}_corrected.pkl'.format(config.PCA_)), 'rb') as f:
             pca_verts[garment] = pkl.load(f, encoding="latin1")
 
-    model_dir = 'saved_model/'
+    model_dir = 'assets/saved_model/'
     # Load model
     m = load_model(model_dir)
 

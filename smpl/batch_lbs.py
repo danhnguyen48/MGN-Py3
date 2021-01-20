@@ -17,7 +17,7 @@ def batch_skew(vec, batch_size=None, name=None):
     vec is N x 3, batch_size is int
     returns N x 3 x 3. Skew_sym version of each matrix.
     """
-    with tf.name_scope(name, "batch_skew", [vec]):
+    with tf.compat.v1.name_scope(name, "batch_skew", [vec]):
         if batch_size is None:
             batch_size = vec.shape.as_list()[0]
         col_inds = tf.constant([1, 2, 3, 5, 6, 7])
@@ -42,14 +42,14 @@ def batch_rodrigues(theta, name=None):
     """
     Theta is N x 3
     """
-    with tf.name_scope(name, "batch_rodrigues", [theta]):
+    with tf.compat.v1.name_scope(name, "batch_rodrigues", [theta]):
         batch_size = tf.shape(theta)[0]
 
         # angle = tf.norm(theta, axis=1)
         # r = tf.expand_dims(tf.div(theta, tf.expand_dims(angle + 1e-8, -1)), -1)
         # angle = tf.expand_dims(tf.norm(theta, axis=1) + 1e-8, -1)
         angle = tf.expand_dims(tf.norm(theta + 1e-8, axis=1), -1)
-        r = tf.expand_dims(tf.div(theta, angle), -1)
+        r = tf.expand_dims(tf.compat.v1.div(theta, angle), -1)
 
         angle = tf.expand_dims(angle, -1)
         cos = tf.cos(angle)
