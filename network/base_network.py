@@ -60,7 +60,7 @@ class GarmentNet(tf.keras.Model):
         # self.leakyrelu = tf.keras.layers.ReLU()
 
     def call(self, inp):
-        with tf.device('/gpu:3'):
+        with tf.device('/gpu:0'):
             x_ = self.d1(inp)
             x_ = self.d2(x_)
             x_ = self.d3(x_)
@@ -161,7 +161,7 @@ class SingleImageNet(tf.keras.Model):
 
     def call(self, inp):
         inp, J_2d = inp
-        with tf.device('/gpu:1'):
+        with tf.device('/gpu:0'):
             x = self.conv1(inp)
             x = self.append_coord(x)
             x = self.conv1_1(x)
@@ -173,7 +173,7 @@ class SingleImageNet(tf.keras.Model):
             x = self.conv2_1(x)
             z = MaxPool2D((2, 2))(x)
 
-        with tf.device('/gpu:1'):
+        with tf.device('/gpu:0'):
             z = self.append_coord(z)
             x = self.conv3(z)
             x = self.append_coord(x)
@@ -326,14 +326,14 @@ class PoseShapeOffsetModel(BaseModel):
             Js = [self.flatten(
                 tf.cast(tf.Variable(x, trainable=False), tf.float32)) for x in Js_in]
 
-        with tf.device('/gpu:1'):
+        with tf.device('/gpu:0'):
             lat_codes = [self.top_([q, j]) for q, j in zip(images, Js)]
             latent_code_offset = self.avg([q[0] for q in lat_codes])
             latent_code_betas = self.avg([q[1] for q in lat_codes])
             latent_code_pose = [tf.concat([q[1], x], axis=-1)
                                 for q, x in zip(lat_codes, Js)]
 
-        with tf.device('/gpu:2'):
+        with tf.device('/gpu:0'):
             latent_code_betas = self.lat_betas(latent_code_betas)
             betas = self.betas(latent_code_betas)
 

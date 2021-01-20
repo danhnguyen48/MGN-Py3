@@ -197,14 +197,16 @@ if __name__ == "__main__":
     dat = pkl.load(open('assets/test_data.pkl',"rb"), encoding="latin1")
 
     # Get results before optimization
-    pred = get_results(m, dat)
+    with tf.device('/gpu:0'):
+        pred = get_results(m, dat, )
     mv = MeshViewers((1, 2), keepalive=True)
     mv[0][0].set_static_meshes(pred['garment_meshes'] + [pred['body']])
     mv[0][1].set_static_meshes([pred['body']])
 
     # Optimize the network
     m = fine_tune(m, dat, dat, display=False)
-    pred = get_results(m, dat, )
+    with tf.device('/gpu:0'):
+        pred = get_results(m, dat, )
 
     mv1 = MeshViewers((1, 2), keepalive=True)
     mv1[0][0].set_static_meshes(pred['garment_meshes'])
