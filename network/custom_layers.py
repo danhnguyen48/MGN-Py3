@@ -27,13 +27,13 @@ class PCA_(Layer):
         super(PCA_, self).__init__(**kwargs)
         self.components = tf.Variable(components, trainable=False)
         self.mean = tf.Variable(mean, trainable=False)
-        self.output_dim = (K.int_shape(self.mean)[0] / 3, 3)
+        self.output_dim = (K.int_shape(self.mean)[0] // 3, 3)
 
     def build(self, input_shape):
         super(PCA_, self).build(input_shape)  # Be sure to call this at the end
 
     def call(self, x):
-        return tf.reshape(tf.matmul(x, self.components) + self.mean, (-1, K.int_shape(self.mean)[0] / 3, 3))
+        return tf.reshape(tf.matmul(x, self.components) + self.mean, (-1, K.int_shape(self.mean)[0] // 3, 3))
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0], self.output_dim[0], self.output_dim[1])
@@ -57,7 +57,7 @@ class Scatter_(Layer):
 
     def call(self, x):
         def fn(a):
-            return tf.sparse_tensor_dense_matmul(self.vs, a)
+            return tf.sparse.sparse_dense_matmul(self.vs, a)
         return tf.map_fn(fn, x)  # self.scatter_offsets(x)
 
     def compute_output_shape(self, input_shape):
