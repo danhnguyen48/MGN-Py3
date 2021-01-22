@@ -211,5 +211,8 @@ if __name__ == "__main__":
     mv1 = MeshViewers((1, 2), keepalive=True)
     mv1[0][0].set_static_meshes(pred['garment_meshes'])
     mv1[0][1].set_static_meshes([pred['body']])
+    pred['garment_meshes'][0].write_obj('test_data_up.obj')
+    pred['garment_meshes'][1].write_obj('test_data_down.obj')
+    pred['body'].write_obj('test_data_body.obj')
 
     print('Done')
