@@ -12,7 +12,7 @@ from __future__ import print_function
 
 import os
 import numpy as np
-import pickle as pkl  # Python 3 change
+import pickle as pickle
 
 import tensorflow as tf
 # tf.enable_eager_execution()
@@ -36,9 +36,9 @@ def sparse_to_tensor(x, dtype=tf.float32):
     return tf.SparseTensor(indices, tf.convert_to_tensor(coo.data, dtype=dtype), coo.shape)
 
 
-class SMPL(tf.keras.Model):  # (object):
-    def __init__(self, pkl_path, theta_in_rodrigues=True, theta_is_perfect_rotmtx=True, isHres=False, dtype=tf.float64, scale=True, name=None):
-        super(SMPL, self).__init__(name=name)
+class SMPL(tf.keras.Model): #(object):
+    def __init__(self, pkl_path, theta_in_rodrigues=True, theta_is_perfect_rotmtx=True, isHres = False, dtype=tf.float64, scale = True, name = None):
+        super(SMPL, self).__init__(name = name)
         """
         pkl_path is the path to a SMPL model
         """
@@ -47,8 +47,11 @@ class SMPL(tf.keras.Model):  # (object):
         self.scale = scale
         self.data_type = dtype
 
-        with open(pkl_path, 'rb') as f:
-            dd = pkl.load(f, encoding="latin1")
+        pkl_file = open(pkl_path, 'rb')
+        u = pickle._Unpickler(pkl_file)
+        u.encoding = "latin1"
+        dd = u.load()
+
         # Mean template vertices
         self.v_template = tf.Variable(
             undo_chumpy(dd['v_template']),
@@ -85,8 +88,8 @@ class SMPL(tf.keras.Model):  # (object):
         #     name='lbs_weights',
         #     dtype=dtype,
         #     trainable=False)
-        self.weights_ = tf.Variable(undo_chumpy(
-            dd['weights']), dtype=dtype, trainable=False)
+        self.weights_ = tf.Variable(undo_chumpy(dd['weights']), dtype=dtype, trainable=False)
+
 
         # expect theta in rodrigues form
         self.theta_in_rodrigues = theta_in_rodrigues
@@ -95,23 +98,25 @@ class SMPL(tf.keras.Model):  # (object):
         self.theta_is_perfect_rotmtx = theta_is_perfect_rotmtx
 
         with open(os.path.join(os.path.dirname(__file__), '../assets/hresMapping.pkl'), 'rb') as f:
-            mapping, nf = pkl.load(f, encoding="latin1")
+            mapping, nf = pickle.load(f, encoding="latin1")
 
         self.weights_hres = tf.cast(tf.Variable(np.hstack([
-            np.expand_dims(
-                np.mean(
-                    mapping.dot(np.repeat(np.expand_dims(dd['weights'][:, i], -1), 3)).reshape(-1, 3), axis=1),
-                axis=-1)
-            for i in range(24)
-        ]), trainable=False), dtype=dtype)
+                np.expand_dims(
+                    np.mean(
+                        mapping.dot(np.repeat(np.expand_dims(dd['weights'][:, i], -1), 3)).reshape(-1, 3)
+                        , axis=1),
+                    axis=-1)
+                for i in range(24)
+            ]), trainable=False ), dtype= dtype)
 
         self.mapping = sparse_to_tensor(mapping, dtype=dtype)
 
-    # HighRes
+    ##HighRes
     def fn(self, b):
         shape = tf.keras.backend.int_shape(b)
         with tf.device('/cpu:0'):
-            return tf.reshape(tf.sparse_tensor_dense_matmul(self.mapping, tf.reshape(b, (-1, 1))), (-1, shape[-1]))
+            return tf.reshape(tf.sparse.sparse_dense_matmul(self.mapping, tf.reshape(b, (-1, 1))), (-1, shape[-1]))
+
 
     def call(self, theta, beta, trans, v_personal):
         """
@@ -120,6 +125,7 @@ class SMPL(tf.keras.Model):  # (object):
         Args:
           beta: N x 10
           theta: N x 72 (with 3-D axis-angle rep)
+
         Updates:
         self.J_transformed: N x 24 x 3 joint location after shaping
                  & posing with beta and theta
@@ -129,12 +135,11 @@ class SMPL(tf.keras.Model):  # (object):
           - Verts: N x 6980 x 3 (low res) N x 27554 x 3 (hres)
         """
 
-        # Cast inputs to float64
-        theta, beta, trans, v_personal = tf.cast(theta, self.data_type), tf.cast(
-            beta, self.data_type), tf.cast(trans, self.data_type), tf.cast(v_personal, self.data_type)
+        ## Cast inputs to float64
+        theta, beta, trans, v_personal = tf.cast(theta, self.data_type), tf.cast(beta, self.data_type), tf.cast(trans, self.data_type), tf.cast(v_personal, self.data_type)
 
         if not self.isHres:
-            v_personal = v_personal[:, :6890, :]
+            v_personal = v_personal[:,:6890,:]
 
         # num_batch = int(tf.shape(beta)[0])
         num_batch = tf.keras.backend.int_shape(beta)[0]
@@ -145,33 +150,28 @@ class SMPL(tf.keras.Model):  # (object):
             [-1, self.size[0], self.size[1]]) + self.v_template
 
         if self.scale:
-            body_height = (v_shaped_scaled[:, 2802, 1] + v_shaped_scaled[:, 6262, 1]) - (
-                v_shaped_scaled[:, 2237, 1] + v_shaped_scaled[:, 6728, 1])
+            body_height = (v_shaped_scaled[:, 2802, 1] + v_shaped_scaled[:, 6262, 1]) - (v_shaped_scaled[:, 2237, 1] + v_shaped_scaled[:, 6728, 1])
             scale = tf.reshape(1.66 / body_height, (-1, 1, 1))
         else:
-            scale = tf.reshape(tf.ones_like(
-                v_shaped_scaled[:, 2802, 1]), (-1, 1, 1))
+            scale = tf.reshape(tf.ones_like(v_shaped_scaled[:, 2802, 1]), (-1, 1, 1))
 
-        # Scale to 1.66m height
+        ## Scale to 1.66m height
         v_shaped_scaled *= scale
 
         v_shaped = v_shaped_scaled
 
         if self.isHres:
-            v_shaped = tf.map_fn(self.fn, v_shaped, dtype=self.data_type)
+            v_shaped = tf.map_fn(self.fn, v_shaped, dtype = self.data_type)
 
         v_shaped_personal = v_shaped + v_personal
 
         # 2. Infer shape-dependent joint locations.
-        # Some gpu dont support float64 operations
+        ## Some gpu dont support float64 operations
         with tf.device('/cpu:0'):
-            Jx = tf.transpose(tf.sparse_tensor_dense_matmul(
-                self.J_regressor, tf.transpose(v_shaped_scaled[:, :, 0])))
-            Jy = tf.transpose(tf.sparse_tensor_dense_matmul(
-                self.J_regressor, tf.transpose(v_shaped_scaled[:, :, 1])))
-            Jz = tf.transpose(tf.sparse_tensor_dense_matmul(
-                self.J_regressor, tf.transpose(v_shaped_scaled[:, :, 2])))
-        J = tf.stack([Jx, Jy, Jz], axis=2)
+            Jx = tf.transpose(tf.sparse.sparse_dense_matmul(self.J_regressor, tf.transpose(v_shaped_scaled[:, :, 0])))
+            Jy = tf.transpose(tf.sparse.sparse_dense_matmul(self.J_regressor, tf.transpose(v_shaped_scaled[:, :, 1])))
+            Jz = tf.transpose(tf.sparse.sparse_dense_matmul(self.J_regressor, tf.transpose(v_shaped_scaled[:, :, 2])))
+        J =  tf.stack([Jx, Jy, Jz], axis=2)
 
         # 3. Add pose blend shapes
         # N x 24 x 3 x 3
@@ -182,13 +182,12 @@ class SMPL(tf.keras.Model):  # (object):
             if self.theta_is_perfect_rotmtx:
                 Rs = theta
             else:
-                s, u, v = tf.svd(theta)
+                s, u, v = tf.linalg.svd(theta)
                 Rs = tf.matmul(u, tf.transpose(v, perm=[0, 1, 3, 2]))
 
         # with tf.name_scope("lrotmin"):
             # Ignore global rotation.
-        pose_feature = tf.reshape(
-            Rs[:, 1:, :, :] - tf.eye(3, dtype=Rs.dtype), [-1, 207])
+        pose_feature = tf.reshape(Rs[:, 1:, :, :] - tf.eye(3, dtype = Rs.dtype), [-1, 207])
 
         # (N x 207) x (207, 20670) -> N x 6890 x 3
         v_posed = tf.reshape(
@@ -199,9 +198,8 @@ class SMPL(tf.keras.Model):  # (object):
             v_posed = tf.map_fn(self.fn, v_posed)
         v_posed += v_shaped_personal
 
-        # 4. Get the global joint location
-        J_transformed, A = batch_global_rigid_transformation(
-            Rs, J, self.parents)
+        #4. Get the global joint location
+        J_transformed, A = batch_global_rigid_transformation(Rs, J, self.parents)
         J_transformed += tf.expand_dims(trans, axis=1)
 
         # 5. Do skinning:
@@ -209,7 +207,7 @@ class SMPL(tf.keras.Model):  # (object):
             W = tf.reshape(
                 tf.tile(self.weights_hres, [num_batch, 1]), [num_batch, -1, 24])
         else:
-            # W is N x 6890 x 24
+        # W is N x 6890 x 24
             W = tf.reshape(
                 tf.tile(self.weights_, [num_batch, 1]), [num_batch, -1, 24])
         # (N x 6890 x 24) x (N x 24 x 16)
@@ -217,13 +215,13 @@ class SMPL(tf.keras.Model):  # (object):
             tf.matmul(W, tf.reshape(A, [num_batch, 24, 16])),
             [num_batch, -1, 4, 4])
         v_posed_homo = tf.concat(
-            [v_posed, tf.ones([num_batch, v_posed.shape[1], 1], dtype=v_posed.dtype)], 2)
+            [v_posed, tf.ones([num_batch, v_posed.shape[1], 1], dtype = v_posed.dtype)], 2)
 
         v_homo = tf.matmul(T, tf.expand_dims(v_posed_homo, -1))
 
-        verts = v_homo[:, :, :3, 0]  # / v_homo[:, :, 3, 0:1]
+        verts = v_homo[:, :, :3, 0] #/ v_homo[:, :, 3, 0:1]
 
         verts_t = verts + tf.expand_dims(trans, axis=1)
 
-        # Return verts, unposed verts, unposed naked verts, joints
+        ##Return verts, unposed verts, unposed naked verts, joints
         return verts_t, v_shaped_personal, v_shaped, J_transformed

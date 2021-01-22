@@ -23,7 +23,7 @@ def pca2offsets(pca_layers, scatter_layers, pca_coeffs, naked_verts, vertexlabel
     temp = tf.concat(
         [tf.keras.backend.expand_dims(naked_verts, -1), temp], axis=-1)
     temp2 = tf.transpose(temp, perm=[0, 1, 3, 2])
-    temp = tf.batch_gather(temp2, tf.cast(vertexlabel, tf.int32))
+    temp = tf.compat.v1.batch_gather(temp2, tf.cast(vertexlabel, tf.int32))
     temp = tf.squeeze(tf.transpose(temp, perm=[0, 1, 3, 2]))
     if return_all:
         return temp, temp2
@@ -58,7 +58,7 @@ def get_results(m, inp, with_pose=False):
     out = m([images, vertex_label, J_2d])
 
     with open('assets/hresMapping.pkl', 'rb') as f:
-        _, faces = pkl.load(f)
+        _, faces = pkl.load(f, encoding="latin1")
 
     pca_layers = [l.PCA_ for l in m.garmentModels]
     scatter_layers = m.scatters
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     dat = pkl.load(open('assets/test_data.pkl',"rb"), encoding="latin1")
 
     # Get results before optimization
-    with tf.device('/gpu:0'):
+    with tf.device('/GPU:0'):
         pred = get_results(m, dat, )
     mv = MeshViewers((1, 2), keepalive=True)
     mv[0][0].set_static_meshes(pred['garment_meshes'] + [pred['body']])
@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
     # Optimize the network
     m = fine_tune(m, dat, dat, display=False)
-    with tf.device('/gpu:0'):
+    with tf.device('/GPU:0'):
         pred = get_results(m, dat, )
 
     mv1 = MeshViewers((1, 2), keepalive=True)
