@@ -1,4 +1,8 @@
 NUM, IMG_SIZE, FACE = 8, 720, False
+DATA_JOINTS_DIR="data/joints"
+DATA_SEG_DIR="data/segmentations"
+MAP_SEG="data/map_seg.txt"
+MAP_JOINTS="data/map_joints.txt"
 
 
 def config(): return None
